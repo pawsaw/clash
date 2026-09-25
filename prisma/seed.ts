@@ -111,16 +111,14 @@ const venues = [
   },
 ];
 
-// title -> venue title; offsets in days/hours from now.
-// A few entries use a negative inDays on purpose, so seed data always has a
-// mix of past and upcoming clashes and both UI states render out of the box.
+// title -> venue title; fixed dates in May 2027 (day of month + hour).
 const clashes = [
   {
     title: "Open Source Hacknight",
     description:
       "Casual evening of contributing to open-source together. All experience levels welcome.",
     venue: "Holzmarkt 25",
-    inDays: -18,
+    day: 3,
     hour: 18,
   },
   {
@@ -128,7 +126,7 @@ const clashes = [
     description:
       "Talks and discussions on data science, ML pipelines, and analytics in production.",
     venue: "Silent Green",
-    inDays: -9,
+    day: 6,
     hour: 19,
   },
   {
@@ -136,7 +134,7 @@ const clashes = [
     description:
       "A relaxed community picnic on the field, with snacks, frisbees, and good vibes.",
     venue: "Tempelhofer Feld",
-    inDays: -3,
+    day: 9,
     hour: 14,
   },
   {
@@ -144,7 +142,7 @@ const clashes = [
     description:
       "Monthly meetup for the Berlin React community. Talks on Server Components, performance, and more.",
     venue: "Factory Berlin",
-    inDays: 3,
+    day: 12,
     hour: 19,
   },
   {
@@ -152,7 +150,7 @@ const clashes = [
     description:
       "Hands-on sessions for people building with LLMs and agents. Bring your projects and questions.",
     venue: "MotionLab Berlin",
-    inDays: 5,
+    day: 15,
     hour: 18,
   },
   {
@@ -160,7 +158,7 @@ const clashes = [
     description:
       "Meet founders, operators, and investors from the Berlin startup ecosystem.",
     venue: "Factory Berlin",
-    inDays: 9,
+    day: 19,
     hour: 19,
   },
   {
@@ -168,7 +166,7 @@ const clashes = [
     description:
       "Deep dive into modern computer vision: detection, segmentation, and real-time inference.",
     venue: "Futurium",
-    inDays: 12,
+    day: 22,
     hour: 18,
   },
   {
@@ -176,7 +174,7 @@ const clashes = [
     description:
       "For everyone working with maps, GIS, and location data. OpenStreetMap, PostGIS, and beyond.",
     venue: "MotionLab Berlin",
-    inDays: 17,
+    day: 26,
     hour: 18,
   },
   {
@@ -184,16 +182,13 @@ const clashes = [
     description:
       "An evening of casual demos and lightning talks from the local dev scene, hosted at Urban Spree.",
     venue: "Urban Spree",
-    inDays: 21,
+    day: 29,
     hour: 20,
   },
 ];
 
-function daysFromNow(days: number, hour: number): Date {
-  const d = new Date();
-  d.setDate(d.getDate() + days);
-  d.setHours(hour, 0, 0, 0);
-  return d;
+function may2027(day: number, hour: number): Date {
+  return new Date(2027, 4, day, hour, 0, 0, 0);
 }
 
 async function main() {
@@ -250,7 +245,7 @@ async function main() {
       data: {
         title: c.title,
         description: c.description,
-        dateTime: daysFromNow(c.inDays, c.hour),
+        dateTime: may2027(c.day, c.hour),
         latitude: venue.latitude,
         longitude: venue.longitude,
         venueId: venue.id,
