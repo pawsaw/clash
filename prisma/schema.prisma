@@ -1,6 +1,6 @@
 // Clash – geospatial social platform
 // Prisma schema is the canonical definition of the domain model.
-// SQLite has no native enums or scalar lists; status/type fields use String.
+// status/type fields are plain Strings with documented values (no DB enums).
 
 generator client {
   provider = "prisma-client"
@@ -8,7 +8,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
 }
 
 /// A registered user.

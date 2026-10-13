@@ -1,10 +1,15 @@
-import path from "node:path";
+import "dotenv/config";
 import bcrypt from "bcryptjs";
 import { PrismaClient } from "../lib/generated/prisma/client";
-import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
+import { PrismaPg } from "@prisma/adapter-pg";
 
-const dbFile = path.join(process.cwd(), "dev.db");
-const adapter = new PrismaBetterSqlite3({ url: `file:${dbFile}` });
+// Seeding wipes and recreates data, so it targets the direct connection when
+// one is provided (same precedence as prisma.config.ts).
+const connectionString = process.env.DIRECT_URL ?? process.env.DATABASE_URL;
+if (!connectionString) {
+  throw new Error("DIRECT_URL or DATABASE_URL must be set to seed the database.");
+}
+const adapter = new PrismaPg({ connectionString });
 const prisma = new PrismaClient({ adapter });
 
 const SEED_PASSWORD = "test";

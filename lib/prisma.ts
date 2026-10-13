@@ -1,21 +1,12 @@
-import path from "node:path";
 import { PrismaClient } from "@/lib/generated/prisma/client";
-import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
-
-// Resolve the SQLite file from DATABASE_URL (e.g. "file:./dev.db") relative to
-// the project root, matching where the Prisma CLI creates the database.
-function resolveDbPath(): string {
-  const url = process.env.DATABASE_URL ?? "file:./dev.db";
-  const file = url.replace(/^file:/, "");
-  if (path.isAbsolute(file)) return file;
-  return path.join(
-    /*turbopackIgnore: true*/ process.cwd(),
-    file.replace(/^\.\//, ""),
-  );
-}
+import { PrismaPg } from "@prisma/adapter-pg";
 
 function createPrismaClient() {
-  const adapter = new PrismaBetterSqlite3({ url: `file:${resolveDbPath()}` });
+  const connectionString = process.env.DATABASE_URL;
+  if (!connectionString) {
+    throw new Error("DATABASE_URL environment variable is not set.");
+  }
+  const adapter = new PrismaPg({ connectionString });
   return new PrismaClient({ adapter });
 }
 

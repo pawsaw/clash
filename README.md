@@ -97,7 +97,7 @@ It's a complete product: authentication, a live map, full CRUD for clashes and v
 | ---------- | ------------------------------------------------------------------------------------ |
 | Framework  | **Next.js 16** (App Router, React Server Components, Server Actions)                 |
 | Language   | **TypeScript** + **React 19**                                                        |
-| Database   | **SQLite** via **Prisma 7** with the `better-sqlite3` driver adapter                 |
+| Database   | **PostgreSQL** (Prisma Postgres) via **Prisma 7** with the `pg` driver adapter       |
 | UI         | **shadcn/ui** (Radix primitives) + **Tailwind CSS v4**                               |
 | Map        | **Leaflet** + **react-leaflet** with OpenStreetMap tiles                             |
 | Auth       | Custom sessions — signed JWT cookie via **jose**, passwords hashed with **bcryptjs** |
@@ -119,7 +119,7 @@ Clash leans on the Next.js App Router's server-first model:
 - **Client interactivity** (map, command palette, avatar cropper, join/leave controls, theme) is isolated into focused `'use client'` components. Leaflet is loaded with `next/dynamic({ ssr: false })` from inside a client wrapper.
 
 ```
-Browser ──▶ Server Component (page) ──▶ lib/data/*  ──▶ Prisma ──▶ SQLite
+Browser ──▶ Server Component (page) ──▶ lib/data/*  ──▶ Prisma ──▶ Postgres
    │                                                       ▲
    └──▶ Client Component ──▶ Server Action (app/actions) ──┘  + revalidatePath / notifications
 ```
@@ -128,7 +128,7 @@ Browser ──▶ Server Component (page) ──▶ lib/data/*  ──▶ Prisma
 
 ## Data model
 
-Five Prisma models (see [`prisma/schema.prisma`](prisma/schema.prisma)). SQLite has no native enums, so `status` and `type` are plain strings with documented values.
+Five Prisma models (see [`prisma/schema.prisma`](prisma/schema.prisma)). `status` and `type` are plain strings with documented values (no database enums).
 
 - **User** — `name`, unique `email`, `passwordHash`, optional `bio`, optional base64 `avatar`.
 - **Venue** — `title`, `description`, `latitude`/`longitude`, `creator`. Hosts many clashes.
@@ -197,7 +197,7 @@ docs/                     # README art
 # 1. Install dependencies (runs `prisma generate` automatically)
 npm install
 
-# 2. Create the SQLite database and apply migrations
+# 2. Apply migrations to the database in DATABASE_URL
 npm run db:migrate
 
 # 3. Seed demo users, venues, clashes, and notifications
@@ -214,9 +214,30 @@ Then open [http://localhost:3000](http://localhost:3000).
 A `.env` file at the project root provides:
 
 ```dotenv
-DATABASE_URL="file:./dev.db"               # SQLite database at the project root
+DATABASE_URL="postgres://USER:PASSWORD@HOST:5432/postgres?sslmode=require"  # Postgres connection
+DIRECT_URL="postgres://..."                # Optional: direct connection for migrations/seed
 SESSION_SECRET="change-me-in-production"   # Used to sign session JWTs
 ```
+
+`DIRECT_URL` falls back to `DATABASE_URL` when it isn't set.
+
+---
+
+## Deployment (Vercel + Prisma Postgres)
+
+This branch (`deploy/vercel`) is the one deployed to Vercel. It differs from `main` only in the data layer: Postgres instead of SQLite (SQLite cannot run on Vercel's read-only, ephemeral filesystem).
+
+Required environment variables (Production):
+
+| Variable         | Purpose                                                          |
+| ---------------- | ---------------------------------------------------------------- |
+| `DATABASE_URL`   | Postgres connection string used by the app at runtime            |
+| `DIRECT_URL`     | Direct connection string for migrations (can equal `DATABASE_URL`) |
+| `SESSION_SECRET` | Secret used to sign session JWTs (use a long random value)       |
+
+The `vercel-build` script runs `prisma migrate deploy` before `next build`, so pending migrations are applied on every deploy. Seed demo data once with `npm run db:seed` (it wipes existing data, so never run it against a database with real users).
+
+Keep the branch current by merging `main` into it; resolve conflicts in favour of the Postgres versions of `prisma/`, `lib/prisma.ts` and `lib/data/*`.
 
 ---
 
@@ -258,7 +279,7 @@ This project targets **Next.js 16**, which differs from older patterns:
 - Mutations use **Server Actions**; refresh data with `revalidatePath`.
 - `next/dynamic({ ssr: false })` is only valid inside a `'use client'` component — Leaflet is wrapped accordingly.
 - **Tailwind v4** is configured in CSS (`app/globals.css`), with no `tailwind.config.js`.
-- The **Prisma client** is generated to `lib/generated/prisma` and instantiated with the `better-sqlite3` adapter.
+- The **Prisma client** is generated to `lib/generated/prisma` and instantiated with the `@prisma/adapter-pg` adapter.
 
 Conventions:
 
