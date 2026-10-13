@@ -26,7 +26,10 @@ export async function getVenues(params: VenueListParams = {}) {
     ...(creatorId ? { creatorId } : {}),
     ...(q
       ? {
-          OR: [{ title: { contains: q } }, { description: { contains: q } }],
+          OR: [
+            { title: { contains: q, mode: "insensitive" as const } },
+            { description: { contains: q, mode: "insensitive" as const } },
+          ],
         }
       : {}),
   };

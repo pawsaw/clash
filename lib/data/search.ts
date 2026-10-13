@@ -6,8 +6,8 @@ export type SearchResults = {
   users: { id: string; name: string; email: string; avatar: string | null }[];
 };
 
-/** Global search across clashes, venues, and users. SQLite LIKE is
- * case-insensitive for ASCII, so `contains` suffices. */
+/** Global search across clashes, venues, and users. Postgres `contains` is
+ * case-sensitive, so every filter opts into `mode: "insensitive"`. */
 export async function searchEverything(query: string): Promise<SearchResults> {
   const q = query.trim();
   if (q.length < 1) {
@@ -16,20 +16,23 @@ export async function searchEverything(query: string): Promise<SearchResults> {
 
   const [clashes, venues, users] = await Promise.all([
     prisma.clash.findMany({
-      where: { title: { contains: q } },
+      where: { title: { contains: q, mode: "insensitive" } },
       select: { id: true, title: true, dateTime: true },
       orderBy: { dateTime: "asc" },
       take: 6,
     }),
     prisma.venue.findMany({
-      where: { title: { contains: q } },
+      where: { title: { contains: q, mode: "insensitive" } },
       select: { id: true, title: true },
       orderBy: { title: "asc" },
       take: 6,
     }),
     prisma.user.findMany({
       where: {
-        OR: [{ name: { contains: q } }, { email: { contains: q } }],
+        OR: [
+          { name: { contains: q, mode: "insensitive" } },
+          { email: { contains: q, mode: "insensitive" } },
+        ],
       },
       select: { id: true, name: true, email: true, avatar: true },
       orderBy: { name: "asc" },

@@ -43,7 +43,10 @@ export async function getClashes(params: ClashListParams = {}) {
         : {}),
     ...(q
       ? {
-          OR: [{ title: { contains: q } }, { description: { contains: q } }],
+          OR: [
+            { title: { contains: q, mode: "insensitive" as const } },
+            { description: { contains: q, mode: "insensitive" as const } },
+          ],
         }
       : {}),
   };
