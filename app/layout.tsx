@@ -4,6 +4,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
+import { Analytics } from "@vercel/analytics/next";
 
 const geistSans = Geist({
   variable: "--font-sans",
@@ -45,6 +46,7 @@ export default function RootLayout({
           <TooltipProvider delayDuration={200}>{children}</TooltipProvider>
           <Toaster richColors position="top-right" />
         </ThemeProvider>
+        <Analytics />
       </body>
     </html>
   );
